@@ -1,7 +1,9 @@
 import express from 'express'; 
 import matchNamesRoute from './routes/matchNamesRoute.mjs';
+import cors from 'cors';
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 
 // Define the route for matching names

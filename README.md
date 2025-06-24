@@ -1,107 +1,87 @@
-# 🧠 Name Matcher API + React UI
+# Name Matcher
 
-This project is a full-stack solution that:
-- Accepts a **text body** and a **list of names**
-- Searches for each name in the text
-- Returns the **line and character positions** of each match
-- Implements this using **multi-threaded workers** in Node.js
-- Has a modern React UI that supports multiple input modes
+A simple web application that allows users to input a block of text (manually, via URL, or file upload) and a comma-separated list of names, then finds and highlights all occurrences of those names in the text.
 
----
+## Features
 
-## 🖥️ Features
+* **Manual Input**: Paste or type text directly in the browser.
+* **URL Input**: Fetch and parse text from any publicly accessible URL.
+* **File Upload**: Upload a local text file (TXT, PDF) and extract text.
+* **Results**: Display each name with the number of matches and clickable details.
 
-### 🔧 Backend (Node.js + Express)
-- Route: `POST /match-names`
-- Accepts JSON:
-```json
-{
-  "text": "string",
-  "names": ["James", "John"]
-}
-```
-- Splits large text into chunks
-- Uses `node:worker_threads` to parallelize name matching
-- Aggregates and returns results in the form:
-```json
-{
-  "James": [ { lineOffset, charOffset }, ... ],
-  "John": [ { lineOffset, charOffset }, ... ]
-}
-```
+## Tech Stack
 
-### 💡 Frontend (React + Vite)
-- Text input via:
-  - Manual text area
-  - File upload (`.txt`)
-  - URL (e.g., `big.txt`)
-- Names input as comma-separated string
-- Result section:
-  - Shows names with count of matches
-  - **Each name is expandable/collapsible**
-    - When open, shows line + character offset of each match
-- Built with `useState` and controlled components
+* **Frontend**: Vite + React
+* **Backend**: Node.js (Express)
+* **Hosting**:
 
----
+  * Frontend on Netlify
+  * Backend API on Railway
 
-## 🚀 Run the project
+## URLs
 
-### 1. Backend
+* Frontend: `https://zingy-starburst-8a517b.netlify.app/`
+* Backend API: `https://name-matcher-api-production.up.railway.app`
+
+## Local Setup
+
+### Prerequisites
+
+* Node.js >= 16
+* npm
+
+### Clone and Install
+
 ```bash
+# Clone repo
+git clone https://github.com/Adihakanyan7/name-matcher-api.git
+cd name-matcher-api
+
+# Install backend deps
 cd backend
 npm install
-npm run dev
-```
 
-### 2. Frontend
-```bash
-cd frontend
+# Install frontend deps
+cd ../frontend
 npm install
+```
+
+### Environment
+
+Currently no `.env` required for local dev. API base is set to `http://localhost:3000` in `frontend/src/App.jsx`.
+
+### Run Locally
+
+```bash
+# Start backend (port 3000)
+cd backend
+npm start
+
+# In another terminal, start frontend (port 5173 by default)
+cd frontend
 npm run dev
 ```
 
-Visit: [http://localhost:5173](http://localhost:5173)
+Open [http://localhost:5173](http://localhost:5173) in your browser.
 
----
+## Deployment
 
-## 📁 Project Structure
-```
-name-matcher-api/
-├── backend/
-│   ├── server.mjs
-│   ├── routes/
-│   │   └── matchNamesRoute.mjs
-│   ├── services/
-│   │   ├── chunkTextService.mjs
-│   │   └── aggregatorService.mjs
-│   ├── workers/
-│   │   └── matcherWorker.mjs
-│   └── models/
-│       └── matchResult.mjs
-│
-├── frontend/
-│   ├── public/big.txt
-│   └── src/App.jsx
-```
+### Backend (Railway)
 
----
+1. Push to GitHub (`master` branch).
+2. Railway will auto-build & deploy.
+3. Confirm service is **Active** on Railway dashboard.
 
-## 🧪 Example Payload
-```json
-{
-  "text": "James went to the store.\nThen John followed James.\nMichael did not go.\nJames was tired.",
-  "names": ["James", "John", "Michael"]
-}
-```
+### Frontend (Netlify)
 
----
+1. Push frontend changes to `master`.
+2. Netlify auto-builds from `frontend` folder.
+3. Confirm deployment is **Published** on Netlify dashboard.
 
-## ✨ Future Ideas
-- Pagination for results
-- Case-insensitive / fuzzy matching
-- Download result as CSV
-- Search history in browser
+## Contributing
 
----
+Feel free to open issues or pull requests. Use the `main` / `master` branch for stable code.
 
-Built with ❤️ by Adi
+## License
+
+MIT © Adi Hakanyan

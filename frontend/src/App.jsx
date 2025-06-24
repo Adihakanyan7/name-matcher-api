@@ -5,34 +5,47 @@ function App() {
   const [text, setText] = useState('');
   const [names, setNames] = useState('');
   const [result, setResult] = useState(null);
-  const [error, setError] = useState(null);
-  const [inputMode, setInputMode] = useState('manual'); // manual | file | url
-  const [url, setUrl] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [inputMode, setInputMode] = useState('manual');
+  const [url, setUrl] = useState('');
+  const [openNames, setOpenNames] = useState([]);
 
   const handleSubmit = async () => {
-    setError(null);
-    const nameList = names.split(',').map(n => n.trim()).filter(Boolean);
+    setErrorMessage(null);
+    const nameList = names.split(',')
+      .map(n => n.trim())
+      .filter(Boolean);
+
+    // Send either { text, names } or { url, names }
+    const payload = inputMode === 'url'
+      ? { url, names: nameList }
+      : { text, names: nameList };
 
     try {
-      const res = await fetch('http://localhost:3000/match-names', {
+      const res = await fetch('https://name-matcher-api-production.up.railway.app/match-names', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, names: nameList }),
+        body: JSON.stringify(payload),
       });
-
-      if (!res.ok) {
-        throw new Error('Request failed');
-      }
-
+      if (!res.ok) throw new Error(`Server responded with ${res.status}`);
       const data = await res.json();
       setResult(data);
+      setOpenNames([]);
     } catch (err) {
       console.error(err);
-      setError('Something went wrong while contacting the backend.');
+      setErrorMessage('An error occurred while contacting the server.');
     }
   };
 
-  const handleFileChange = async (e) => {
+  const toggleName = (name) => {
+    setOpenNames(prev =>
+      prev.includes(name)
+        ? prev.filter(n => n !== name)
+        : [...prev, name]
+    );
+  };
+
+  const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
@@ -40,103 +53,149 @@ function App() {
     reader.readAsText(file);
   };
 
-  const fetchFromUrl = async () => {
-    try {
-      const res = await fetch(url);
-      const txt = await res.text();
-      setText(txt);
-    } catch (err) {
-      console.error(err);
-      setError('Failed to load text from URL');
-    }
-  };
-
   const fillExampleNames = () => {
     setNames('James, John, Elizabeth, Mary, George, Thomas, Henry, Alice, Sherlock, Watson');
   };
 
   const fillExampleText = () => {
-    setText(`James went to the store.\nThen John followed James.\nMichael did not go.\nJames was tired.`);
+    setText(
+      `James went to the store.\n` +
+      `Then John followed James.\n` +
+      `Michael did not go.\n` +
+      `James was tired.`
+    );
   };
 
   const fillExampleUrl = () => {
-    setUrl('http://localhost:5173/big.txt');
+    setUrl('https://www.gutenberg.org/files/11/11-0.txt');
   };
 
   return (
-    <div style={{ padding: '2rem' }}>
+    <div style={{ padding: '2rem', fontFamily: 'Arial, sans-serif', lineHeight: '1.6' }}>
       <h1 style={{ textAlign: 'center' }}>Name Matcher</h1>
 
-      <div style={{ display: 'flex', gap: '2rem' }}>
+      <p style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto 1rem' }}>
+        Paste or type a block of text and a comma-separated list of names.
+        You can also upload a file or enter a URL.
+      </p>
+
+      <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+        <button
+          onClick={handleSubmit}
+          style={{ padding: '0.5rem 1rem', fontSize: '1rem', cursor: 'pointer' }}
+        >
+          Match Names
+        </button>
+      </div>
+
+      {errorMessage && (
+        <p style={{ color: 'red', textAlign: 'center' }}>{errorMessage}</p>
+      )}
+
+      <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
         <div style={{ flex: 1 }}>
-          <div>
-            <label>Select input source:</label><br />
-            <label><input type="radio" checked={inputMode === 'manual'} onChange={() => setInputMode('manual')} /> Manual input</label><br />
-            <label><input type="radio" checked={inputMode === 'file'} onChange={() => setInputMode('file')} /> Upload file</label><br />
-            <label><input type="radio" checked={inputMode === 'url'} onChange={() => setInputMode('url')} /> Load from URL</label><br /><br />
+          <fieldset style={{ border: '1px solid #ccc', padding: '1rem', borderRadius: '6px' }}>
+            <legend><strong>Input Mode</strong></legend>
+
+            <label>
+              <input
+                type="radio"
+                checked={inputMode === 'manual'}
+                onChange={() => setInputMode('manual')}
+              /> Manual Input
+            </label><br />
+
+            <label>
+              <input
+                type="radio"
+                checked={inputMode === 'file'}
+                onChange={() => setInputMode('file')}
+              /> Upload File
+            </label><br />
+
+            <label>
+              <input
+                type="radio"
+                checked={inputMode === 'url'}
+                onChange={() => setInputMode('url')}
+              /> Enter URL
+            </label><br /><br />
 
             {inputMode === 'manual' && (
-              <div>
+              <>
                 <textarea
                   rows="10"
                   cols="60"
                   value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  placeholder="Paste or type your text here"
+                  onChange={e => setText(e.target.value)}
+                  placeholder="Paste or type text here"
+                  style={{ width: '100%', fontFamily: 'monospace' }}
                 />
                 <br />
                 <button onClick={fillExampleText}>Example Text</button>
-              </div>
+              </>
             )}
 
             {inputMode === 'file' && (
-              <input type="file" accept=".txt" onChange={handleFileChange} />
+              <input
+                type="file"
+                accept=".txt"
+                onChange={handleFileChange}
+              />
             )}
 
             {inputMode === 'url' && (
-              <div>
+              <>
                 <input
                   type="url"
-                  value={url || ''}
-                  onChange={(e) => setUrl(e.target.value)}
+                  value={url}
+                  onChange={e => setUrl(e.target.value)}
                   placeholder="https://example.com/file.txt"
-                  size="60"
+                  style={{ width: '100%' }}
                 />
-                <button onClick={fetchFromUrl} style={{ marginLeft: '0.5rem' }}>Load Text</button>
-                <button onClick={fillExampleUrl} style={{ marginLeft: '0.5rem' }}>Example URL</button>
-              </div>
+                <br /><br />
+                <button onClick={fillExampleUrl}>Example URL</button>
+              </>
             )}
-          </div>
+          </fieldset>
 
           <br />
 
-          <label>Names (comma-separated):</label>
-          <button onClick={fillExampleNames} style={{ marginLeft: '1rem' }}>Example Names</button><br />
-          <input
-            type="text"
-            value={names}
-            onChange={(e) => setNames(e.target.value)}
-            size="60"
-            placeholder="e.g. James, John, Mary..."
-          /><br /><br />
-
-          <button onClick={handleSubmit}>Match Names</button>
-
-          {error && <p style={{ color: 'red' }}>{error}</p>}
+          <fieldset style={{ border: '1px solid #ccc', padding: '1rem', borderRadius: '6px' }}>
+            <legend><strong>Names List</strong></legend>
+            <input
+              type="text"
+              value={names}
+              onChange={e => setNames(e.target.value)}
+              placeholder="e.g. James, John, Mary..."
+              style={{ width: '100%' }}
+            />
+            <br /><br />
+            <button onClick={fillExampleNames}>Example Names</button>
+          </fieldset>
         </div>
 
-        <div style={{ flex: 1 }}>
-          <h2>Results:</h2>
+        <div style={{ flex: 1, borderLeft: '1px solid #ddd', paddingLeft: '1.5rem' }}>
+          <h2>Results</h2>
           {result ? (
-            <ul>
+            <ul style={{ paddingLeft: '1rem' }}>
               {Object.entries(result).map(([name, positions]) => (
                 <li key={name} style={{ marginBottom: '1rem' }}>
-                  <strong>{name}</strong> - {positions.length} matches
-                  <ul>
-                    {positions.map((pos, idx) => (
-                      <li key={idx}>Line: {pos.lineOffset}, Char: {pos.charOffset}</li>
-                    ))}
-                  </ul>
+                  <button
+                    onClick={() => toggleName(name)}
+                    style={{ background: 'none', border: 'none', color: '#007BFF', cursor: 'pointer' }}
+                  >
+                    {openNames.includes(name) ? '▼' : '▶'} {name} ({positions.length} matches)
+                  </button>
+                  {openNames.includes(name) && (
+                    <ul style={{ paddingLeft: '1.5rem', marginTop: '0.5rem', borderLeft: '2px solid #eee' }}>
+                      {positions.map((pos, idx) => (
+                        <li key={idx} style={{ fontFamily: 'monospace' }}>
+                          Line: {pos.lineOffset + 1}, Char: {pos.charOffset + 1}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </li>
               ))}
             </ul>

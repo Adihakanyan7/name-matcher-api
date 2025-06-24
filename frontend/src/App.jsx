@@ -67,7 +67,7 @@ function App() {
   };
 
   const fillExampleUrl = () => {
-    setUrl('https://www.gutenberg.org/files/11/11-0.txt');
+    setUrl('https://norvig.com/big.txt');
   };
 
   return (

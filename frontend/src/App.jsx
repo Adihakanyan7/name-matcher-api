@@ -22,7 +22,7 @@ function App() {
       : { text, names: nameList };
 
     try {
-      const res = await fetch('https://name-matcher-api-production.up.railway.app/match-names', {
+      const res = await fetch('name-matcher-api-production.up.railway.app/match-names', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
